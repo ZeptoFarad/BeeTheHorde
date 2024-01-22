@@ -1,5 +1,6 @@
 use crate::wasm4::{ self };
 use crate::palette::set_draw_color;
+use tiny_rng::{ Rng, Rand };
 //use tiny_rng::{ Rng, Rand };
 // BeeBody
 // const BEE_BODY_WIDTH: u32 = 8;
@@ -24,11 +25,13 @@ pub struct Bee {
     width: u32,
     height: u32,
     wingsup: bool,
-    direction: u32,
-    pathx: array,
-    pathy: Vec<(i32, u32)>,
+    pathx: [i32; 70],
+    pathy: [i32; 70],
     dirx: u32,
     diry: u32,
+    direction: u32,
+    currentx: usize,
+    currenty: usize,
 }
 
 impl Bee {
@@ -40,12 +43,14 @@ impl Bee {
             ypos: ypos,
             flags: BEE_BODY_FLAGS,
             wingsup: true,
-            direction: 0,
-            pathx: Vec::new(),
-            pathy: Vec::new(),
+            pathx: [0; 70],
+            pathy: [0; 70],
             dirx: 0,
             diry: 0,
             first_draw: false,
+            direction: 0,
+            currentx: 0,
+            currenty: 0,
         }
     }
 
@@ -74,7 +79,7 @@ impl Bee {
         }
     }
     #[allow(unused)]
-    pub fn update(&mut self) {
+    pub fn buzz_wings(&mut self) {
         if self.wingsup == true {
             self.wingsup = false;
         } else {
@@ -82,31 +87,54 @@ impl Bee {
         }
     }
 
-    pub fn attack(&mut self, clock: u32) {}
+    pub fn attack(&mut self, clock: u32) -> bool {
+        let mut rng = Rng::from_seed(clock as u64);
+        let rand = rng.rand_range_u32(1, 3);
+        if rand == 1 {
+            self.xpos = self.pathx[self.currentx];
+            self.direction = self.dirx;
+            if self.currenty != 69 {
+                self.currentx += 1;
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            self.ypos = self.pathy[self.currenty];
+            self.direction = self.diry;
+            if self.currenty != 69 {
+                self.currenty += 1;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
 
     pub fn calculate_path(&mut self) {
-        if self.xpos < 80 {
-            for position in (self.xpos..80).rev() {
-                self.pathx.push((position, 270u32));
+        if self.xpos > 80 {
+            for (index, _) in self.pathx.into_iter().enumerate() {
+                self.pathx[index] = self.xpos - (index as i32);
             }
+            self.dirx = 90;
         } else {
-            for position in 80..self.xpos {
-                self.pathx.push((position, 90u32));
+            for (index, _) in self.pathx.into_iter().enumerate() {
+                self.pathx[index] = self.xpos + (index as i32);
             }
+            self.dirx = 270;
         }
-        if self.ypos < 80 {
-            for position in (self.ypos..80).rev() {
-                self.pathy.push((position, 180u32));
+        if self.ypos > 80 {
+            for (index, _) in self.pathy.into_iter().enumerate() {
+                self.pathy[index] = self.ypos - (index as i32);
             }
+            self.diry = 0;
         } else {
-            for position in 80..self.ypos {
-                self.pathy.push((position, 0u32));
+            for (index, _) in self.pathy.into_iter().enumerate() {
+                self.pathy[index] = self.ypos + (index as i32);
             }
+            self.diry = 180;
         }
+
         self.first_draw = true;
-        // for (x, _y) in self.pathx.iter() {
-        //     let s = x.to_string();
-        //     trace(s);
-        // }
     }
 }

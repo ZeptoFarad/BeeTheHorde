@@ -6,6 +6,7 @@ pub struct Base {
     pub ypos: i32,
     width: u32,
     height: u32,
+    pub base_hp: i32,
 }
 
 impl Base {
@@ -15,11 +16,15 @@ impl Base {
             height: 20,
             xpos: 80,
             ypos: 80,
+            base_hp: 100,
         }
     }
     pub fn draw(&self) {
-        set_draw_color(0x2);
+        set_draw_color(0x3);
         //rect (x, y, width, height)
-        wasm4::rect(self.xpos - 10, self.ypos - 10, self.width, self.height)
+        wasm4::rect(self.xpos - 10, self.ypos - 10, self.width, self.height);
+        set_draw_color(0x1);
+        wasm4::rect(self.xpos - 5, self.ypos - 5, 10, 10);
     }
+    //pub fn base_hit(&self) {}
 }

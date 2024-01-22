@@ -6,6 +6,7 @@ mod explode;
 mod bee;
 mod game;
 mod base;
+mod menu;
 
 use game::Game;
 use lazy_static::lazy_static;
