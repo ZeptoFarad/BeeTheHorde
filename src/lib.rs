@@ -7,6 +7,7 @@ mod bee;
 mod game;
 mod base;
 mod menu;
+mod cursor;
 
 use game::Game;
 use lazy_static::lazy_static;

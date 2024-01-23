@@ -1,4 +1,4 @@
-use crate::wasm4::{ self };
+use crate::{ palette::set_draw_color, wasm4::{ self } };
 
 const DUO_TITLE_WIDTH: u32 = 140;
 const DUO_TITLE_HEIGHT: u32 = 28;
@@ -102,6 +102,8 @@ impl Menu {
 
     pub fn display(&mut self) {
         wasm4::blit(&DUO_TITLE, 10, 10, DUO_TITLE_WIDTH, DUO_TITLE_HEIGHT, DUO_TITLE_FLAGS);
-        wasm4::blit(&PLAY_BUTTON, 60, 80, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, DUO_TITLE_FLAGS)
+        wasm4::blit(&PLAY_BUTTON, 60, 80, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, DUO_TITLE_FLAGS);
+        set_draw_color(0x2);
+        wasm4::text("By: FuzzyAlgorithm", 10, 150)
     }
 }

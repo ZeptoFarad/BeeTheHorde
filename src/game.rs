@@ -4,6 +4,7 @@ use crate::explode::Explosion;
 use crate::palette::set_draw_color;
 use crate::wasm4::{ self };
 use crate::menu::Menu;
+use crate::cursor::Cursor;
 
 pub struct Game {
     //bee: Bee,
@@ -13,6 +14,7 @@ pub struct Game {
     booms: Vec<Explosion>,
     menu: Menu,
     value: bool,
+    cursor: Cursor,
 }
 
 impl Game {
@@ -24,12 +26,14 @@ impl Game {
             booms: vec![],
             menu: Menu::new(),
             value: true,
+            cursor: Cursor::new(),
         }
     }
     pub fn update(&mut self) {
-        set_draw_color(0x0241);
-        self.menu.display();
-
+        if self.value == true {
+            set_draw_color(0x0241);
+            self.menu.display();
+        }
         if self.value == false {
             const BOOM: std::ops::Range<i32> = 60..90;
             self.frame_count += 1;
@@ -41,9 +45,9 @@ impl Game {
                 }
                 if self.frame_count % 15 == 0 {
                     if BOOM.contains(&xbee.xpos) && BOOM.contains(&xbee.ypos) {
-                        // trace("BOOM!");
                         self.booms.push(Explosion::new(xbee.xpos, xbee.ypos));
                         self.bees.remove(pos);
+                        self.base.base_hit();
                         break;
                     }
                     let status: bool = xbee.attack(self.frame_count);
@@ -69,10 +73,6 @@ impl Game {
                 }
             }
 
-            if self.frame_count % 5 == 0 && self.bees.len() < 8 {
-                self.input();
-            }
-
             set_draw_color(0x2);
             wasm4::text("Bees:", 2, 2);
             let mut left: String = (8 - self.bees.len()).to_string().to_owned();
@@ -80,17 +80,28 @@ impl Game {
             left.push_str(slash);
             wasm4::text(left, 50, 2);
         }
-    }
+        let button_areax: std::ops::Range<i32> = 60..100;
+        let button_areay: std::ops::Range<i32> = 80..100;
 
-    pub fn input(&mut self) {
-        let mouse_down = unsafe { *wasm4::MOUSE_BUTTONS };
-        let mouse_x = (unsafe { *wasm4::MOUSE_X }) as i32;
-        let mouse_y = (unsafe { *wasm4::MOUSE_Y }) as i32;
-
-        if mouse_down == 1 {
-            // trace(mouse_x.to_string());
-            // trace(mouse_y.to_string());
-            self.bees.push(Bee::new(mouse_x, mouse_y));
+        let [xpos, ypos, click] = self.cursor.position(self.frame_count);
+        let mut upclick: bool = false;
+        if
+            button_areax.contains(&xpos) &&
+            button_areay.contains(&ypos) &&
+            click == 1 &&
+            self.value == true
+        {
+            self.value = false;
         }
+        if click == 1 && self.value == false && self.frame_count % 20 == 0 && upclick == false {
+            self.bees.push(Bee::new(xpos, ypos));
+            upclick = true;
+        }
+
+        set_draw_color(0x02);
+        wasm4::line(xpos, ypos - 2, xpos, ypos - 3);
+        wasm4::line(xpos, ypos + 2, xpos, ypos + 3);
+        wasm4::line(xpos - 2, ypos, xpos - 3, ypos);
+        wasm4::line(xpos + 2, ypos, xpos + 3, ypos);
     }
 }
