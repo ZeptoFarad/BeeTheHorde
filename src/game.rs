@@ -1,10 +1,14 @@
+use std::thread::sleep;
+
 use crate::bee::Bee;
 use crate::base::Base;
 use crate::explode::Explosion;
 use crate::palette::set_draw_color;
-use crate::wasm4::{ self };
+use crate::wasm4::{ self, blit, rect, text, trace };
 use crate::menu::Menu;
 use crate::cursor::Cursor;
+use crate::rules::RULES;
+use crate::win::YOU_WIN;
 
 pub struct Game {
     //bee: Bee,
@@ -13,8 +17,12 @@ pub struct Game {
     frame_count: u32,
     booms: Vec<Explosion>,
     menu: Menu,
-    value: bool,
+    game_running: bool,
     cursor: Cursor,
+    game_win: bool,
+    display_rules: bool,
+    rules_timer: i32,
+    base_destroyed: bool,
 }
 
 impl Game {
@@ -25,20 +33,40 @@ impl Game {
             bees: vec![],
             booms: vec![],
             menu: Menu::new(),
-            value: true,
+            game_running: false,
+            game_win: false,
+            display_rules: false,
             cursor: Cursor::new(),
+            rules_timer: 120,
+            base_destroyed: false,
         }
     }
     pub fn update(&mut self) {
-        if self.value == true {
+        if self.game_running == false && self.display_rules == false && self.game_win == false {
             set_draw_color(0x0241);
             self.menu.display();
+        } else if self.game_running == false && self.display_rules == true {
+            set_draw_color(0x020);
+            blit(&RULES, 20, 20, 120, 120, 0);
+            set_draw_color(0x002);
+            text("Click to continue", 10, 150);
+            self.rules_timer -= 1;
+        } else if self.game_running == false && self.game_win == true {
+            set_draw_color(0x0240);
+            blit(&YOU_WIN, 20, 60, 120, 40, 1);
+            let mut timer_string = (self.rules_timer / 60).to_string();
+            text("Reset in:", 30, 150);
+            text(timer_string, 120, 150);
+            self.rules_timer -= 1;
+            if self.rules_timer <= 0 {
+                self.game_running = false;
+                self.game_win = false;
+                self.display_rules = false;
+            }
         }
-        if self.value == false {
+        if self.game_running == true {
             const BOOM: std::ops::Range<i32> = 60..90;
             self.frame_count += 1;
-            // let s = self.frame_count.to_string();
-            // trace(s);
             for (pos, xbee) in self.bees.iter_mut().enumerate() {
                 if xbee.first_draw == false {
                     xbee.calculate_path();
@@ -47,7 +75,12 @@ impl Game {
                     if BOOM.contains(&xbee.xpos) && BOOM.contains(&xbee.ypos) {
                         self.booms.push(Explosion::new(xbee.xpos, xbee.ypos));
                         self.bees.remove(pos);
-                        self.base.base_hit();
+                        self.base_destroyed = self.base.base_hit();
+                        if self.base_destroyed == true {
+                            self.game_running = false;
+                            self.game_win = true;
+                            self.rules_timer = 5 * 60;
+                        }
                         break;
                     }
                     let status: bool = xbee.attack(self.frame_count);
@@ -61,6 +94,7 @@ impl Game {
                 }
                 xbee.draw();
             }
+
             self.base.draw();
             set_draw_color(0x2);
             for (pos, boom) in self.booms.iter_mut().enumerate() {
@@ -72,16 +106,21 @@ impl Game {
                     boom.explode();
                 }
             }
-
+            // Safety Area
+            set_draw_color(0x30);
+            rect(60, 60, 35, 35);
+            //Current Bees Count
             set_draw_color(0x2);
-            wasm4::text("Bees:", 2, 2);
+            text("Bees out:", 2, 2);
             let mut left: String = (8 - self.bees.len()).to_string().to_owned();
             let slash: &str = "/8";
             left.push_str(slash);
-            wasm4::text(left, 50, 2);
+            wasm4::text(left, 80, 2);
+            //Total Bees Left
         }
         let button_areax: std::ops::Range<i32> = 60..100;
         let button_areay: std::ops::Range<i32> = 80..100;
+        let safe_area: std::ops::Range<i32> = 60..95;
 
         let [xpos, ypos, click] = self.cursor.position(self.frame_count);
         let mut upclick: bool = false;
@@ -89,13 +128,36 @@ impl Game {
             button_areax.contains(&xpos) &&
             button_areay.contains(&ypos) &&
             click == 1 &&
-            self.value == true
+            self.game_running == false
         {
-            self.value = false;
+            trace("CLICK");
+            self.display_rules = true;
         }
-        if click == 1 && self.value == false && self.frame_count % 20 == 0 && upclick == false {
+        // Display Rules Screen
+        if click == 1 && self.display_rules == true && self.rules_timer <= 0 {
+            self.display_rules = false;
+            self.game_running = true;
+        }
+        //Add New Bees
+        if
+            click == 1 &&
+            self.game_running == true &&
+            self.frame_count % 5 == 0 &&
+            upclick == false &&
+            !safe_area.contains(&xpos) &&
+            !safe_area.contains(&ypos)
+        {
             self.bees.push(Bee::new(xpos, ypos));
             upclick = true;
+        } else if
+            click == 1 &&
+            self.game_running == true &&
+            self.frame_count % 5 == 0 &&
+            upclick == false &&
+            safe_area.contains(&xpos) &&
+            safe_area.contains(&ypos)
+        {
+            trace("Inside Safe Area");
         }
 
         set_draw_color(0x02);

@@ -111,28 +111,23 @@ impl Base {
             height: 20,
             xpos: 80,
             ypos: 80,
-            base_hp: 100,
+            base_hp: 200,
         }
     }
     pub fn draw(&self) {
-        // set_draw_color(0x3);
-        // wasm4::text("Base:", 150, 40);
-        // wasm4::text(self.base_hp.to_string(), 150, 50);
-        // wasm4::rect(self.xpos - 10, self.ypos - 10, self.width, self.height);
-        // set_draw_color(0x1);
-        // wasm4::rect(self.xpos - 5, self.ypos - 5, 10, self.base_hp / 10);
         set_draw_color(0x0234);
-        // blitSub (spritePtr, x, y, width, height, srcX, srcY, stride, flags)
-        wasm4::blit_sub(&BASE_SHEET, 50, 50, 20, 20, 40, 1, BASE_SHEET_WIDTH, 1);
-
-        //First <3 = 8, Second = 30, Third = 52,
+        wasm4::blit_sub(&BASE_SHEET, 68, 68, 20, 20, self.base_hp, 1, BASE_SHEET_WIDTH, 1);
     }
-    pub fn base_hit(&mut self) {
-        if self.base_hp > 10 {
-            self.base_hp -= 10;
-        } else {
-            self.base_hp -= 10;
-            wasm4::trace("---  You Died  ---")
+    pub fn base_hit(&mut self) -> bool {
+        if self.base_hp > 20 {
+            self.base_hp -= 20;
+            wasm4::trace("---  Base Hit  ---");
+            return false;
+        } else if self.base_hp <= 20 {
+            self.base_hp -= 20;
+            wasm4::trace("---  You Win  ---");
+            return true;
         }
+        return true;
     }
 }

@@ -90,7 +90,7 @@ impl Bee {
     pub fn attack(&mut self, clock: u32) -> bool {
         let mut rng = Rng::from_seed(clock as u64);
         let rand = rng.rand_range_u32(1, 3);
-        if rand == 1 {
+        if rand == 1 && self.currentx != self.pathx.len() {
             self.xpos = self.pathx[self.currentx];
             self.direction = self.dirx;
             if self.currenty != 69 {
@@ -99,7 +99,7 @@ impl Bee {
             } else {
                 return false;
             }
-        } else {
+        } else if rand == 2 && self.currenty != self.pathy.len() {
             self.ypos = self.pathy[self.currenty];
             self.direction = self.diry;
             if self.currenty != 69 {
@@ -109,6 +109,7 @@ impl Bee {
                 return false;
             }
         }
+        return false;
     }
 
     pub fn calculate_path(&mut self) {
