@@ -147,8 +147,14 @@ impl Game {
             !safe_area.contains(&xpos) &&
             !safe_area.contains(&ypos)
         {
-            self.bees.push(Bee::new(xpos, ypos));
-            upclick = true;
+            trace("Click");
+            if self.bees.len() < 8 {
+                let new_bee = Bee::new(xpos, ypos);
+                self.bees.push(new_bee);
+                upclick = true;
+
+                trace("Click");
+            }
         } else if
             click == 1 &&
             self.game_running == true &&
