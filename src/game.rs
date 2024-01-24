@@ -1,5 +1,3 @@
-use std::thread::sleep;
-
 use crate::bee::Bee;
 use crate::base::Base;
 use crate::explode::Explosion;
@@ -54,7 +52,7 @@ impl Game {
         } else if self.game_running == false && self.game_win == true {
             set_draw_color(0x0240);
             blit(&YOU_WIN, 20, 60, 120, 40, 1);
-            let mut timer_string = (self.rules_timer / 60).to_string();
+            let timer_string = (self.rules_timer / 60).to_string();
             text("Reset in:", 30, 150);
             text(timer_string, 120, 150);
             self.rules_timer -= 1;
@@ -123,7 +121,7 @@ impl Game {
         let safe_area: std::ops::Range<i32> = 60..95;
 
         let [xpos, ypos, click] = self.cursor.position(self.frame_count);
-        let mut upclick: bool = false;
+
         if
             button_areax.contains(&xpos) &&
             button_areay.contains(&ypos) &&
@@ -143,7 +141,6 @@ impl Game {
             click == 1 &&
             self.game_running == true &&
             self.frame_count % 5 == 0 &&
-            upclick == false &&
             !safe_area.contains(&xpos) &&
             !safe_area.contains(&ypos)
         {
@@ -151,7 +148,6 @@ impl Game {
             if self.bees.len() < 8 {
                 let new_bee = Bee::new(xpos, ypos);
                 self.bees.push(new_bee);
-                upclick = true;
 
                 trace("Click");
             }
@@ -159,7 +155,6 @@ impl Game {
             click == 1 &&
             self.game_running == true &&
             self.frame_count % 5 == 0 &&
-            upclick == false &&
             safe_area.contains(&xpos) &&
             safe_area.contains(&ypos)
         {

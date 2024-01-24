@@ -1,4 +1,4 @@
-use crate::wasm4::{ self, trace };
+use crate::wasm4::{ self };
 
 pub struct Cursor {
     pub positionx: i32,
